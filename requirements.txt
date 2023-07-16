@@ -1,2 +1,4 @@
 langchain
 requests
+google-cloud
+google-cloud-aiplatform
