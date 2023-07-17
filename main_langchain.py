@@ -15,7 +15,6 @@ def main(transcript_path: str) -> None:
 
 #    langchain_prompting.generate_concurrently(prompt=langchain_prompting.chunk_summarization_prompt, transcript_object=transcript_object)
 
-
    ts = int(datetime.datetime.now().timestamp() * 1000)
    output_file_path = f"./output_{ts}.txt"
    write_to_file(output, output_file_path)
