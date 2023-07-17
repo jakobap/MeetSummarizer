@@ -34,9 +34,6 @@ class Transcript:
     with open(self.file_path, "r") as f:
       self.transcript_string = f.read()
 
-    # self.attendees = self._get_attendees()
-    # self.contributions = self._get_contributions()
-
     self.approx_total_tokens = self._approx_tokens(self.transcript_string)
     self.prompt_chunks = self._split_transcript_into_chunks(self.transcript_string)
 
@@ -61,7 +58,7 @@ class Transcript:
 
     print(f"Num Words: {num_words}")
 
-    #  For the PaLM 2 model, token is equivalent to about 4 characters. 100 tokens are about 60-80 English words.
+    # For the PaLM 2 model, token is equivalent to about 4 characters. 100 tokens are about 60-80 English words.
     # Palm input token limit = 8196
     # Input word limit approx. (8196/100) * 60 = 4917.59
     # Input character limit approx. (8196 * 4 ) = 32768
