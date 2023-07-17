@@ -14,7 +14,7 @@ parameters = {
 
 from vertexai.language_models import TextGenerationModel
 
-def text_model_api_call(transcript):
+def text_model_api_call(prompt_chunk, attendees):
 
     model = TextGenerationModel.from_pretrained("text-bison")
 
@@ -29,29 +29,28 @@ def text_model_api_call(transcript):
     # print(transcript)
 
     # Constructing the prompt
-    prompt = f"""SYSTEM: You are truthful and never lie. Never make up facts and if you are not 100% sure, reply with why you can not answer in a truthful way. 
+    prompt = f"""
+    SYSTEM: You are truthful and never lie. Never make up facts and if you are not 100% sure, reply with why you can not answer in a truthful way. 
 
     The following is the list of meeting attendees:
-    Borys Papevis, David Ullrich, Eslam Gamal Abdalla Elhosary, Jakob Pörschmann, Jakob Pörschmann\'s Presentation, João Cunha, Johny Jose, Levan Tsinadze, Mario König, Oleksandr Yuzva, Paul Gerlach, Rose Howell, Rupak Chakraborty, Tamer Temizer
-
+    {attendees}
 
     The following is a meeting transcript with the format
     [attendee]: [contribution]
 
-    First, separate the contributions for each. of the attendees.
-
     Beginning of transcript:
-    {transcript}
+    {prompt_chunk}
     End of Transcript
 
     First, separate the contributions for each. of the attendees.
-    Second, summarise the contribution of each of the attendee
+    Second, summarise the contribution of each of the attendee as bullet points.
     Third, bring the contribution summary per attendee in the following format:
     [attendee]: [Summarised contribution]
     [attendee]: [Summarised contribution]
 
     Only provide one summary per attendee.
-    Don\'t provide a summary for attendees that did not contribute."""
+    Do not provide a summary for attendees that did not contribute.
+    """
 
     # Print completed prompt
     # print(prompt)
