@@ -6,23 +6,48 @@ import secrets_1
 
 import google.auth
 
-credentials, project_id = google.auth.load_credentials_from_file(secrets_1.gcp_credential_file)
 
-aiplatform.init(credentials=credentials, project=project_id)
+# Defining Transcript Chunk Summarization Langchain Prompt Template.
 
-template = """Question: {question}
+def run_langchain(attendees, prompt_chunk):
+    # GCP authentication via Service Account.
+    credentials, project_id = google.auth.load_credentials_from_file(
+        secrets_1.gcp_credential_file)
+    aiplatform.init(credentials=credentials, project=project_id)
 
-Answer: Let's think step by step."""
+    # Define Model to call.
+    llm = VertexAI(temperature=0,max_output_tokens=1024,top_p=0.3,top_k=20)
 
-prompt = PromptTemplate(template=template, input_variables=["question"])
+    chunk_summarization_prompt = PromptTemplate(input_variables=["attendees", "prompt_chunk"],
+                                                template="""/
+    SYSTEM: You are truthful and never lie. Never make up facts and if you are not 100% sure, reply with why you can not answer in a truthful way. 
 
-llm = VertexAI()
+    The following is the list of meeting attendees:
+    {attendees}
 
-llm_chain = LLMChain(prompt=prompt, llm=llm)
+    The following is a meeting transcript with the format
+    [attendee]: [contribution]
 
-question = "What NFL team won the Super Bowl in the year Justin Beiber was born?"
+    Beginning of transcript:
+    {prompt_chunk}
+    End of Transcript
 
-response = llm_chain.run(question)
+    First, separate the contributions for each. of the attendees.
+    Second, summarise the contribution of each of the attendee as bullet points.
+    Third, bring the contribution summary per attendee in the following format:
+    [attendee]: [Summarised contribution]
+    [attendee]: [Summarised contribution]
 
-print(response)
-print("Hello World!")
+    Only provide one summary per attendee.
+    Do not provide a summary for attendees that did not contribute.
+    """
+                                                )
+
+    # Define LLM Chain
+    llm_chain = LLMChain(prompt=chunk_summarization_prompt, llm=llm)
+
+    # Run Chain.
+    response = llm_chain.predict(attendees=attendees, prompt_chunk=prompt_chunk)
+    # print(response)
+
+    return response
