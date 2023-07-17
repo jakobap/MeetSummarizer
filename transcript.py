@@ -22,7 +22,9 @@ class Transcript:
     """
 
     self.file_path: str = file_path
+    self.clean_file_path: str = None
     self.transcript_string: str = None
+    self.attendees: str = None
     self.approx_total_tokens: int = None
     self.prompt_chunks: list = None
 
@@ -31,7 +33,13 @@ class Transcript:
     Load the transcript from the file.
     """
 
-    with open(self.file_path, "r") as f:
+    # Extract attendees from raw transcript
+    self._get_attendees()
+
+    # Clean and load transcript into workable str format
+    self._clean()
+
+    with open(self.clean_file_path, "r") as f:
       self.transcript_string = f.read()
 
     self.approx_total_tokens = self._approx_tokens(self.transcript_string)
@@ -89,9 +97,47 @@ class Transcript:
 
     return chunks
   
+  def _get_attendees(self):
+    """
+    Gets the participants from the transcript.
+
+    Returns:
+        A string of all meeting participants.
+    """
+    with open(self.file_path, "r") as f:
+        lines = f.readlines()
+        
+        index = lines.index("Attendees\n")
+        
+        self.attendees = lines[index + 1]
+        
+        # print(self.attendees)
+
+    return self
+  
+  def _clean(self):
+    """
+    Cleans the raw transcript down to pure transcripted meeting contributions.
+
+    Returns:
+        A clean transcript string.
+    """
+    with open(self.file_path, "r") as f:
+        lines = f.readlines()        
+        clean_lines = lines[5:-1]
+        # print(clean_lines)
+
+    self.clean_file_path = f"{self.file_path.split('.txt')[0]}_cleaned.txt"
+
+    with open(self.clean_file_path, "w") as f:
+        f.writelines(clean_lines)
+
+    return self
+  
 
 if __name__ == '__main__':
    
-   transcript = Transcript("./transcript_full.txt").load()
+#    transcript = Transcript("./transcript_full.txt").load()
+   transcript = Transcript("./transcript1_raw.txt").load()
 
    print("Hello World!")

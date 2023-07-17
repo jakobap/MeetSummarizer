@@ -34,6 +34,7 @@ def text_model_api_call(transcript):
     The following is the list of meeting attendees:
     Borys Papevis, David Ullrich, Eslam Gamal Abdalla Elhosary, Jakob Pörschmann, Jakob Pörschmann\'s Presentation, João Cunha, Johny Jose, Levan Tsinadze, Mario König, Oleksandr Yuzva, Paul Gerlach, Rose Howell, Rupak Chakraborty, Tamer Temizer
 
+
     The following is a meeting transcript with the format
     [attendee]: [contribution]
 
@@ -67,3 +68,9 @@ def text_model_api_call(transcript):
     print("Text Model Call Sucessful")
  
     return response.text
+
+
+
+
+    # Attendees
+    # Jakob Pörschmann, Jonas Lochny, Langer Lulatsch (de-ber-tsky2), Nacho Coloma, Nilesh More

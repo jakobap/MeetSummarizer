@@ -33,6 +33,8 @@ def write_to_file(list_of_strings, file_path):
 
 if __name__ == '__main__':
 
-   main("./transcript_full.txt")
+#    main("./transcript_full.txt")
+
+   main("./transcript2_full.txt")
 
    print("Hello World!")
