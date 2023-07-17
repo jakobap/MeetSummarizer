@@ -62,8 +62,8 @@ def text_model_api_call(transcript):
 
     # Call LLM & print model response
     response = model.predict(prompt,**parameters)
-    print(f"Response from Model: {response.text}")
+    # print(f"Response from Model: {response.text}")
 
     print("Text Model Call Sucessful")
-
-    return 
+ 
+    return response.text
