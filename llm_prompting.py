@@ -15,6 +15,10 @@ parameters = {
 from vertexai.language_models import TextGenerationModel
 
 
+
+
+
+
 model = TextGenerationModel.from_pretrained("text-bison")
 
 
@@ -54,6 +58,11 @@ Don\'t provide a summary for attendees that did not contribute."""
 
 # Print completed prompt
 print(prompt)
+
+# print number of words of prompt 
+
+
+print(f"Prompt Num Words: {count_words(prompt)}")
 
 # Call LLM & print model response
 response = model.predict(prompt,**parameters)
