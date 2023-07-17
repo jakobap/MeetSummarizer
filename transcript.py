@@ -1,6 +1,3 @@
-
-
-
 class Transcript:
   """
     The Transcript class represents a transcript of a conversation. It can be used to load a transcript from a file, split it into chunks, and count the number of tokens in it.
