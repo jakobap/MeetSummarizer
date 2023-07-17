@@ -21,10 +21,10 @@ class Transcript:
       file_path: The path to the transcript file.
     """
 
-    self.file_path = file_path
-    self.transcript_string = None
-    self.approx_total_tokens = None
-    self.prompt_chunks = None
+    self.file_path: str = file_path
+    self.transcript_string: str = None
+    self.approx_total_tokens: int = None
+    self.prompt_chunks: list = None
 
   def load(self):
     """
@@ -37,7 +37,7 @@ class Transcript:
     self.approx_total_tokens = self._approx_tokens(self.transcript_string)
     self.prompt_chunks = self._split_transcript_into_chunks(self.transcript_string)
 
-    return None
+    return self
   
   def _approx_tokens(self, prompt: str) -> int:
     """
@@ -56,7 +56,7 @@ class Transcript:
     # Count the number of words.
     num_words = len(words)
 
-    print(f"Num Words: {num_words}")
+    # print(f"Num Words: {num_words}")
 
     # For the PaLM 2 model, token is equivalent to about 4 characters. 100 tokens are about 60-80 English words.
     # Palm input token limit = 8196
@@ -82,13 +82,13 @@ class Transcript:
     for i in range(0, len(transcript), chunk_size):
         chunks.append(transcript[i:i + chunk_size])
 
-        print(f"Chunk {i}")
-        tk = self._approx_tokens(chunks[-1])
-        print(f"Num Tokens: {tk}")
-        print("####")
+        # print(f"Chunk {i}")
+        # tk = self._approx_tokens(chunks[-1])
+        # print(f"Num Tokens: {tk}")
+        # print("####")
 
     return chunks
-
+  
 
 if __name__ == '__main__':
    
