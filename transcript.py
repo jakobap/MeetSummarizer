@@ -1,3 +1,5 @@
+from langchain.schema.document import Document
+
 class Transcript:
   """
     The Transcript class represents a transcript of a conversation. It can be used to load a transcript from a file, split it into chunks, and count the number of tokens in it.
@@ -86,16 +88,17 @@ class Transcript:
         A list of chunks.
     """
 
-    chunks = []
-    for i in range(0, len(transcript), chunk_size):
-        chunks.append(transcript[i:i + chunk_size])
+    # # python native
+    # chunks = []
+    # for i in range(0, len(transcript), chunk_size):
+    #     chunks.append(transcript[i:i + chunk_size])
 
-        # print(f"Chunk {i}")
-        # tk = self._approx_tokens(chunks[-1])
-        # print(f"Num Tokens: {tk}")
-        # print("####")
+    # langchain implementation
+    documents = []
+    for chunk_count, i in enumerate(range(0, len(transcript), chunk_size)):
+       documents.append(Document(page_content=transcript[i:i + chunk_size], metadata={"chunk": chunk_count}))
 
-    return chunks
+    return documents
   
   def _get_attendees(self):
     """
