@@ -29,7 +29,7 @@ chunk_summarization_prompt = PromptTemplate(input_variables=["attendees", "promp
     [attendee]: [Summarised contribution]
     [attendee]: [Summarised contribution]
 
-    Only provide one summary per attendee.
+    Only provide exaclty one summary per attendee.
     Do not provide a summary for attendees that did not contribute.
     """
     )
@@ -57,7 +57,7 @@ Third, bring the contribution summary per attendee across summarization chunks i
 [attendee]: [Summarised contribution]
 [attendee]: [Summarised contribution]
 
-Only provide one summary per attendee.
+Only provide exactly one summary per attendee.
 Do not provide a summary for attendees that did not contribute.
 """
 )

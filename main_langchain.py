@@ -24,7 +24,7 @@ def main(transcript_path: str) -> None:
 
    final_summary = langchain_prompting.run_meta_summarization_chain(attendees=transcript_object.attendees,
                                                                     summarized_chunks=summarized_chunks_string)
-   
+    
    write_to_file([final_summary], f"./meta_output_{ts}.txt")   
    
    return None
