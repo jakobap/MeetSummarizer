@@ -1,4 +1,6 @@
 from langchain.schema.document import Document
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 
 class Transcript:
   """
@@ -88,15 +90,19 @@ class Transcript:
         A list of chunks.
     """
 
-    # # python native
-    # chunks = []
-    # for i in range(0, len(transcript), chunk_size):
-    #     chunks.append(transcript[i:i + chunk_size])
+    # Generic chunking based on character count
+    # documents = []
+    # for chunk_count, i in enumerate(range(0, len(transcript), chunk_size)):
+    #    documents.append(Document(page_content=transcript[i:i + chunk_size], metadata={"chunk": chunk_count}))
 
-    # langchain implementation
-    documents = []
-    for chunk_count, i in enumerate(range(0, len(transcript), chunk_size)):
-       documents.append(Document(page_content=transcript[i:i + chunk_size], metadata={"chunk": chunk_count}))
+
+    # Langchain Document Splitter.
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size = chunk_size,
+                                                   chunk_overlap  = 50,
+                                                   length_function = len
+                                                   )
+    
+    documents = text_splitter.create_documents([self.transcript_string])
 
     return documents
   
