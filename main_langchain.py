@@ -1,6 +1,5 @@
 import transcript
 import langchain_prompting
-from langchain.evaluation import load_evaluator, CriteriaEvalChain
 
 import datetime
 

@@ -89,6 +89,20 @@ refine_summarization_prompt = PromptTemplate(
     """
 )
 
+def authenticate_vertex_llm(temperature=.2, max_output_token=1024, top_p=.3, top_k=20):
+    # GCP authentication via Service Account.
+    credentials, project_id = google.auth.load_credentials_from_file(
+        secrets_1.gcp_credential_file)
+    aiplatform.init(credentials=credentials, project=project_id)
+
+    # Define Model to call.
+    llm = VertexAI(temperature=temperature,
+                   max_output_tokens=max_output_token,
+                   top_p=top_p,
+                   top_k=top_k)
+    return llm
+
+
 def run_simple_summarization_chain(attendees:str, prompt_chunk:str):
     # # GCP authentication via Service Account.
     # credentials, project_id = google.auth.load_credentials_from_file(
@@ -165,22 +179,12 @@ def run_refine_documents_chain(attendees: str, prompt_chunks: list):
     # Define Evaluation LLM & Respective string evaluation criteria.
     eval_llm = authenticate_vertex_llm()
 
-    evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
-    iterative_summary_eval = evaluator.evaluate_strings(prediction=response, input="test")
-    print(iterative_summary_eval)
+    evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
+    helpfulness_eval = evaluator.evaluate_strings(prediction=response, input=chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunks[0].page_content))
+    print(helpfulness_eval)
+
+    evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
+    consiceness_eval = evaluator.evaluate_strings(prediction=response, input=chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunks[0].page_content))
+    print(consiceness_eval)
 
     return response
-
-
-def authenticate_vertex_llm(temperature=.2, max_output_token=1024, top_p=.3, top_k=20):
-    # GCP authentication via Service Account.
-    credentials, project_id = google.auth.load_credentials_from_file(
-        secrets_1.gcp_credential_file)
-    aiplatform.init(credentials=credentials, project=project_id)
-
-    # Define Model to call.
-    llm = VertexAI(temperature=temperature,
-                   max_output_tokens=max_output_token,
-                   top_p=top_p,
-                   top_k=top_k)
-    return llm
