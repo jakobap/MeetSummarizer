@@ -48,6 +48,7 @@ class Transcript:
 
     self.approx_total_tokens = self._approx_tokens(self.transcript_string)
     self.prompt_chunks = self._split_transcript_into_chunks(self.transcript_string)
+    # self.prompt_chunks_dict = {i: chunk for i, chunk in enumerate(self.prompt_chunks)}
 
     return self
   

@@ -11,7 +11,7 @@ def main(transcript_path: str) -> None:
    output = []
    for count, prompt_chunk in enumerate(transcript_object.prompt_chunks):
       output.append(f"##### Summarization Chunk {count} #####")
-      output.append(langchain_prompting.run_langchain(attendees=transcript_object.attendees, prompt_chunk=prompt_chunk))
+      output.append(langchain_prompting.run_simple_summarization_chain(attendees=transcript_object.attendees, prompt_chunk=prompt_chunk))
 
    ts = int(datetime.datetime.now().timestamp() * 1000)
    output_file_path = f"./output_{ts}.txt"
@@ -22,8 +22,12 @@ def main(transcript_path: str) -> None:
 
    final_summary = langchain_prompting.run_meta_summarization_chain(attendees=transcript_object.attendees,
                                                                     summarized_chunks=summarized_chunks_string)
-    
-   write_to_file([final_summary], f"./meta_output_{ts}.txt")   
+   
+   iterative_summary = langchain_prompting.run_refine_documents_chain(attendees=transcript_object.attendees,
+                                                                      prompt_chunks=transcript_object.prompt_chunks)
+   
+   write_to_file([final_summary], f"./meta_output_{ts}.txt")
+   write_to_file([iterative_summary], f"./iterative_meta_output_{ts}.txt")   
    
    return None
 
