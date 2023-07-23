@@ -183,8 +183,12 @@ def run_refine_documents_chain(attendees: str, prompt_chunks: list):
     helpfulness_eval = evaluator.evaluate_strings(prediction=response, input=chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunks[0].page_content))
     print(helpfulness_eval)
 
-    evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
-    consiceness_eval = evaluator.evaluate_strings(prediction=response, input=chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunks[0].page_content))
-    print(consiceness_eval)
+    evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
+    conciseness_eval = evaluator.evaluate_strings(prediction=response, input=chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunks[0].page_content))
+    print(conciseness_eval)
+
+    evaluator = load_evaluator("criteria", criteria="relevance", llm=eval_llm)
+    relevance_eval = evaluator.evaluate_strings(prediction=response, input=chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunks[0].page_content))
+    print(relevance_eval)
 
     return response
