@@ -1,6 +1,7 @@
 from langchain.llms import VertexAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, RefineDocumentsChain
+from langchain.evaluation import load_evaluator, CriteriaEvalChain
 
 from google.cloud import aiplatform
 import google.auth
@@ -89,13 +90,15 @@ refine_summarization_prompt = PromptTemplate(
 )
 
 def run_simple_summarization_chain(attendees:str, prompt_chunk:str):
-    # GCP authentication via Service Account.
-    credentials, project_id = google.auth.load_credentials_from_file(
-        secrets_1.gcp_credential_file)
-    aiplatform.init(credentials=credentials, project=project_id)
+    # # GCP authentication via Service Account.
+    # credentials, project_id = google.auth.load_credentials_from_file(
+    #     secrets_1.gcp_credential_file)
+    # aiplatform.init(credentials=credentials, project=project_id)
 
-    # Define Model to call.
-    llm = VertexAI(temperature=0, max_output_tokens=1024, top_p=0.3, top_k=20)
+    # # Define Model to call.
+    # llm = VertexAI(temperature=0, max_output_tokens=1024, top_p=0.3, top_k=20)
+
+    llm = authenticate_vertex_llm(temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
 
     # Define LLM Chain
     llm_chain = LLMChain(prompt=chunk_summarization_prompt, llm=llm)
@@ -109,13 +112,15 @@ def run_simple_summarization_chain(attendees:str, prompt_chunk:str):
 
 
 def run_meta_summarization_chain(attendees:str, summarized_chunks:str):
-    # GCP authentication via Service Account.
-    credentials, project_id = google.auth.load_credentials_from_file(
-        secrets_1.gcp_credential_file)
-    aiplatform.init(credentials=credentials, project=project_id)
+    # # GCP authentication via Service Account.
+    # credentials, project_id = google.auth.load_credentials_from_file(
+    #     secrets_1.gcp_credential_file)
+    # aiplatform.init(credentials=credentials, project=project_id)
 
-    # Define Model to call.
-    llm = VertexAI(temperature=0, max_output_tokens=1024, top_p=0.3, top_k=20)
+    # # Define Model to call.
+    # llm = VertexAI(temperature=0, max_output_tokens=1024, top_p=0.3, top_k=20)
+
+    llm = authenticate_vertex_llm(temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
 
     # Define LLM Chain
     llm_chain = LLMChain(prompt=meta_summarization_prompt, llm=llm)
@@ -130,13 +135,15 @@ def run_meta_summarization_chain(attendees:str, summarized_chunks:str):
 
 def run_refine_documents_chain(attendees: str, prompt_chunks: list): 
 
-    # GCP authentication via Service Account.
-    credentials, project_id = google.auth.load_credentials_from_file(
-        secrets_1.gcp_credential_file)
-    aiplatform.init(credentials=credentials, project=project_id)
+    # # GCP authentication via Service Account.
+    # credentials, project_id = google.auth.load_credentials_from_file(
+    #     secrets_1.gcp_credential_file)
+    # aiplatform.init(credentials=credentials, project=project_id)
 
-    # Define Model to call.
-    llm = VertexAI(temperature=0, max_output_tokens=1024, top_p=0.3, top_k=20)
+    # # Define Model to call.
+    # llm = VertexAI(temperature=0, max_output_tokens=1024, top_p=0.3, top_k=20)
+
+    llm = authenticate_vertex_llm(temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
 
     document_prompt = PromptTemplate(
         input_variables=["page_content"],
@@ -152,9 +159,28 @@ def run_refine_documents_chain(attendees: str, prompt_chunks: list):
         refine_llm_chain=llm_chain_refine,
         document_prompt=document_prompt,
         document_variable_name="chunk_to_summarize",
-        initial_response_name="prelim_summary",
-    )
-
+        initial_response_name="prelim_summary")
     response = chain(inputs={"input_documents": prompt_chunks, "attendees": attendees})["output_text"]
 
+    # Define Evaluation LLM & Respective string evaluation criteria.
+    eval_llm = authenticate_vertex_llm()
+
+    evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
+    iterative_summary_eval = evaluator.evaluate_strings(prediction=response, input="test")
+    print(iterative_summary_eval)
+
     return response
+
+
+def authenticate_vertex_llm(temperature=.2, max_output_token=1024, top_p=.3, top_k=20):
+    # GCP authentication via Service Account.
+    credentials, project_id = google.auth.load_credentials_from_file(
+        secrets_1.gcp_credential_file)
+    aiplatform.init(credentials=credentials, project=project_id)
+
+    # Define Model to call.
+    llm = VertexAI(temperature=temperature,
+                   max_output_tokens=max_output_token,
+                   top_p=top_p,
+                   top_k=top_k)
+    return llm
