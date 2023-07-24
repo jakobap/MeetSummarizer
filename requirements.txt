@@ -1,2 +1,4 @@
+Flask
+gunicorn
 langchain
 google-cloud-aiplatform
