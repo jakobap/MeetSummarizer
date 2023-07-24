@@ -9,6 +9,7 @@ ENV PYTHONUNBUFFERED True
 ENV APP_HOME /app
 WORKDIR $APP_HOME
 COPY . ./
+COPY ./index.html ./index.html
 COPY rsc ./rsc
 
 # Install production dependencies.
