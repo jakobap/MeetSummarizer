@@ -1,52 +1,90 @@
-import transcript
-import langchain_prompting
+from rsc import transcript
+from rsc import langchain_prompting
 
-import datetime
+import secrets_1
 
-def main(transcript_path: str) -> None:
-   # Create Transcript Object from Input
-   transcript_object = transcript.Transcript(transcript_path).load()
+# import datetime
 
-   output = []
-   for count, prompt_chunk in enumerate(transcript_object.prompt_chunks):
-      output.append(f"##### Summarization Chunk {count} #####")
-      output.append(langchain_prompting.run_simple_summarization_chain(attendees=transcript_object.attendees, prompt_chunk=prompt_chunk))
+import google.auth
+from google.cloud import storage
 
-   ts = int(datetime.datetime.now().timestamp() * 1000)
-   output_file_path = f"./output_{ts}.txt"
-   write_to_file(output, output_file_path)
-   
-   with open(output_file_path, "r") as f:
-     summarized_chunks_string = f.read()
+class SummarizationSession:
 
-   final_summary = langchain_prompting.run_meta_summarization_chain(attendees=transcript_object.attendees,
-                                                                    summarized_chunks=summarized_chunks_string)
-   
-   iterative_summary = langchain_prompting.run_refine_documents_chain(attendees=transcript_object.attendees,
-                                                                      prompt_chunks=transcript_object.prompt_chunks)
-   
-   write_to_file([final_summary], f"./meta_output_{ts}.txt")
-   write_to_file([iterative_summary], f"./iterative_meta_output_{ts}.txt")
-   
-   return None
+  def __init__(self, timestamp, file_path=None, file_blob=None):
+    """
+    Constructor.
 
-def write_to_file(list_of_strings, file_path) -> None:
-  """Writes a list of strings to a txt file.
+    Args:
+      file_path: The path to the transcript file.
+    """
+    self.file_path: str = file_path
+    self.file_blob = file_blob
+    self.ts = timestamp
 
-  Args:
-    list_of_strings: A list of strings to write to the file.
-    file_path: The path to the file to write to.
-  """
+  def __call__(self):
 
-  with open(file_path, "w") as f:
-    for string in list_of_strings:
-      f.write(string + "\n")
+    transcript_object = transcript.Transcript(file_path=self.file_path,
+                                              file_blob=self.file_blob,
+                                              timestamp=self.ts).load()
+
+    output = []
+    for count, prompt_chunk in enumerate(transcript_object.prompt_chunks):
+        output.append(f"##### Summarization Chunk {count} #####")
+        output.append(langchain_prompting.run_simple_summarization_chain(attendees=transcript_object.attendees, prompt_chunk=prompt_chunk))
+
+
+    output_file_path = f"./output_{self.ts}.txt"
+    self._write_to_file(output, output_file_path)
     
+    with open(output_file_path, "r") as f:
+      summarized_chunks_string = f.read()
+
+    sequential_summary = langchain_prompting.run_meta_summarization_chain(attendees=transcript_object.attendees,
+                                                                      summarized_chunks=summarized_chunks_string)
+    
+    iterative_summary = langchain_prompting.run_refine_documents_chain(attendees=transcript_object.attendees,
+                                                                        prompt_chunks=transcript_object.prompt_chunks)
+    
+    self._write_to_file([sequential_summary], f"./meta_output_{self.ts}.txt")
+    self._write_to_file([iterative_summary], f"./iterative_meta_output_{self.ts}.txt")
+
+    self._write_to_gcs(list_of_strings=[sequential_summary], txt_name='meta_output_', bucket=secrets_1.meta_output_bucket)
+    self._write_to_gcs(list_of_strings=[iterative_summary], txt_name='iterative_meta_output_', bucket=secrets_1.iterative_meta_output_bucket)
+    return sequential_summary
+
+  def _write_to_file(self, list_of_strings, file_path) -> None:
+    """Writes a list of strings to a txt file.
+
+    Args:
+      list_of_strings: A list of strings to write to the file.
+      file_path: The path to the file to write to.
+    """
+
+    with open(file_path, "w") as f:
+      for string in list_of_strings:
+        f.write(string + "\n")
+      
+      return None
+    
+  def _write_to_gcs(self, list_of_strings, txt_name, bucket) -> None:
+    """Writes a list of strings to a txt file.
+
+    Args:
+      list_of_strings: A list of strings to write to the file.
+      bucket: The bucket path to write to.
+    """
+    credentials, project_id = google.auth.load_credentials_from_file(secrets_1.gcp_credential_file)
+
+    bucket = storage.Client(project=project_id, credentials=credentials).bucket(bucket)
+    blob = bucket.blob(f'{self.ts}_{txt_name}.txt')
+    blob.upload_from_string(', '.join(list_of_strings))
     return None
 
 
 if __name__ == '__main__':
+   
+   session = SummarizationSession(file_path="./rsc/transcript1_raw.txt")
 
-   main("./transcript1_raw.txt")
+   session()
 
    print("Hello World!")

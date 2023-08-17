@@ -1,6 +1,12 @@
 from langchain.schema.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+import io
+
+from google.cloud import storage
+import google.auth
+
+import secrets_1
 
 class Transcript:
   """
@@ -17,7 +23,7 @@ class Transcript:
         _approx_tokens(self, prompt: str) -> int: Count the number of tokens in a palm 2 bison prompt.
         _split_transcript_into_chunks(self, transcript:str, chunk_size:int = 28000) -> list: Splits the input transcript into chunks of the specified size.
   """
-  def __init__(self, file_path):
+  def __init__(self, timestamp, file_path=None, file_blob=None):
     """
     Constructor.
 
@@ -26,6 +32,8 @@ class Transcript:
     """
 
     self.file_path: str = file_path
+    self.file_blob = file_blob
+    self.timestamp = timestamp
     self.clean_file_path: str = None
     self.transcript_string: str = None
     self.attendees: str = None
@@ -43,8 +51,15 @@ class Transcript:
     # Clean and load transcript into workable str format
     self._clean()
 
-    with open(self.clean_file_path, "r") as f:
-      self.transcript_string = f.read()
+    if self.file_path is not None:
+
+      with open(self.clean_file_path, "r") as f:
+        self.transcript_string = f.read()
+
+    elif self.file_blob is not None:
+        self.transcript_string = self.file_blob.download_as_text()
+    else:
+       raise ValueError("Problem with file extraction!")
 
     self.approx_total_tokens = self._approx_tokens(self.transcript_string)
     self.prompt_chunks = self._split_transcript_into_chunks(self.transcript_string)
@@ -92,18 +107,17 @@ class Transcript:
     """
 
     # Generic chunking based on character count
-    # documents = []
-    # for chunk_count, i in enumerate(range(0, len(transcript), chunk_size)):
-    #    documents.append(Document(page_content=transcript[i:i + chunk_size], metadata={"chunk": chunk_count}))
+    documents = []
+    for chunk_count, i in enumerate(range(0, len(transcript), chunk_size)):
+       documents.append(Document(page_content=transcript[i:i + chunk_size], metadata={"chunk": chunk_count}))
 
-
-    # Langchain Document Splitter.
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size = chunk_size,
-                                                   chunk_overlap  = 50,
-                                                   length_function = len
-                                                   )
+    # # Langchain Document Splitter.
+    # text_splitter = RecursiveCharacterTextSplitter(chunk_size = chunk_size,
+    #                                                chunk_overlap  = 50,
+    #                                                length_function = len
+    #                                                )
     
-    documents = text_splitter.create_documents([self.transcript_string])
+    # documents = text_splitter.create_documents([self.transcript_string])
 
     return documents
   
@@ -114,14 +128,30 @@ class Transcript:
     Returns:
         A string of all meeting participants.
     """
-    with open(self.file_path, "r") as f:
-        lines = f.readlines()
+
+    if self.file_path is not None:
+
+      with open(self.file_path, "r") as f:
+          lines = f.readlines()
+          
+          index = lines.index("Attendees\n")
+          
+          self.attendees = lines[index + 1]
+          
+          # print(self.attendees)
         
+    elif self.file_blob is not None:
+        
+        raw_str = self.file_blob.download_as_text()
+        buf = io.StringIO(raw_str)
+        lines = buf.readlines()
+
         index = lines.index("Attendees\n")
-        
+          
         self.attendees = lines[index + 1]
-        
-        # print(self.attendees)
+
+    else:
+       raise ValueError("Problem with file extraction!")
 
     return self
   
@@ -132,22 +162,55 @@ class Transcript:
     Returns:
         A clean transcript string.
     """
-    with open(self.file_path, "r") as f:
-        lines = f.readlines()        
+    if self.file_path is not None:
+      with open(self.file_path, "r") as f:
+          lines = f.readlines()        
+          clean_lines = lines[5:-1]
+
+      self.clean_file_path = f"{self.file_path.split('.txt')[0]}_cleaned.txt"
+
+      with open(self.clean_file_path, "w") as f:
+          f.writelines(clean_lines)
+        
+    elif self.file_blob is not None:
+        raw_str = self.file_blob.download_as_text()
+        buf = io.StringIO(raw_str)
+        lines = buf.readlines()
         clean_lines = lines[5:-1]
-        # print(clean_lines)
 
-    self.clean_file_path = f"{self.file_path.split('.txt')[0]}_cleaned.txt"
+        self.clean_file_path = f"{self.timestamp}_cleaned.txt"
 
-    with open(self.clean_file_path, "w") as f:
-        f.writelines(clean_lines)
+        with open(self.clean_file_path, "w") as f:
+            f.writelines(clean_lines)
+
+        with open(self.clean_file_path, "r") as f:
+           self.transcript_string = f.read()
+
+        self._write_to_gcs(list_of_strings=clean_lines, txt_name='cleaned_', bucket=secrets_1.cleaned_transcript_bucket)
+
+    else:
+       raise ValueError("Problem with file extraction!")
 
     return self
+  
+  def _write_to_gcs(self, list_of_strings, txt_name, bucket) -> None:
+    """Writes a list of strings to a txt file.
+
+    Args:
+      list_of_strings: A list of strings to write to the file.
+      bucket: The bucket path to write to.
+    """
+    credentials, project_id = google.auth.load_credentials_from_file(secrets_1.gcp_credential_file)
+
+    bucket = storage.Client(project=project_id, credentials=credentials).bucket(bucket)
+    blob = bucket.blob(f'{self.timestamp}_{txt_name}.txt')
+    blob.upload_from_string(', '.join(list_of_strings))
+    return None
   
 
 if __name__ == '__main__':
    
-#    transcript = Transcript("./transcript_full.txt").load()
-   transcript = Transcript("./transcript1_raw.txt").load()
+#    transcript = Transcript(".//transcript_full.txt").load()
+   transcript = Transcript("./rsc/transcript1_raw.txt").load()
 
    print("Hello World!")

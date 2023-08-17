@@ -33,11 +33,11 @@ chunk_summarization_prompt = PromptTemplate(input_variables=["attendees", "chunk
     Only provide exaclty one summary per attendee.
     Do not provide a summary for attendees that did not contribute.
     """
-    )
+                                            )
 
 meta_summarization_prompt = PromptTemplate(
     input_variables=["attendees", "summarized_chunks"],
-    template= """/
+    template="""/
     SYSTEM: You are truthful and never lie. Never make up facts and if you are not 100% sure, reply with why you can not answer in a truthful way. 
 
 The following is the list of meeting attendees:
@@ -65,7 +65,7 @@ Do not provide a summary for attendees that did not contribute.
 
 refine_summarization_prompt = PromptTemplate(
     input_variables=["attendees", "prelim_summary", "chunk_to_summarize"],
-    template= """/
+    template="""/
     SYSTEM: You are truthful and never lie. Never make up facts and if you are not 100% sure, reply with why you can not answer in a truthful way. 
 
     The following is the list of meeting attendees:
@@ -89,6 +89,25 @@ refine_summarization_prompt = PromptTemplate(
     """
 )
 
+task_extraction_prompt = PromptTemplate(
+    input_variables=["chunk_to_summarize"],
+    template="""/
+    SYSTEM: You are truthful and never lie. Never make up facts and if you are not 100% sure, reply with why you can not answer in a truthful way. 
+
+    You are a helpful assistant keeping track of the follow up questions a customer engineer needs to answer after a meeting.
+
+    The following is a meeting transcript with the format.
+    [attendee]: [contribution]
+
+    Beginning of transcript:
+    {chunk_to_summarize}
+    End of Transcript
+
+    List the questions that the Customer Engineer could not answer in the meeting.
+    """
+)
+
+
 def authenticate_vertex_llm(temperature=.2, max_output_token=1024, top_p=.3, top_k=20):
     # GCP authentication via Service Account.
     credentials, project_id = google.auth.load_credentials_from_file(
@@ -103,9 +122,10 @@ def authenticate_vertex_llm(temperature=.2, max_output_token=1024, top_p=.3, top
     return llm
 
 
-def run_simple_summarization_chain(attendees:str, prompt_chunk:str):
+def run_simple_summarization_chain(attendees: str, prompt_chunk: str):
 
-    llm = authenticate_vertex_llm(temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
+    llm = authenticate_vertex_llm(
+        temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
 
     # Define LLM Chain
     llm_chain = LLMChain(prompt=chunk_summarization_prompt, llm=llm)
@@ -118,29 +138,30 @@ def run_simple_summarization_chain(attendees:str, prompt_chunk:str):
     # Define Evaluation LLM & Respective string evaluation criteria.
     eval_llm = authenticate_vertex_llm()
 
-    print("#### Simple Summary Evaluation ####")
-    input_prompt = chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunk.page_content)
+    # print("#### Simple Summary Evaluation ####")
+    # input_prompt = chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunk.page_content)
 
-    evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
-    helpfulness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
-    # print(helpfulness_eval)
+    # evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
+    # helpfulness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
+    # # print(helpfulness_eval)
 
-    evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
-    conciseness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
-    # print(conciseness_eval)
+    # evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
+    # conciseness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
+    # # print(conciseness_eval)
 
-    evaluator = load_evaluator("criteria", criteria="relevance", llm=eval_llm)
-    relevance_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
-    # print(relevance_eval)
+    # evaluator = load_evaluator("criteria", criteria="relevance", llm=eval_llm)
+    # relevance_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
+    # # print(relevance_eval)
 
-    print(f"#### Score: {helpfulness_eval['score']} {conciseness_eval['score']} {relevance_eval['score']} ####")
+    # print(f"#### Score: {helpfulness_eval['score']} {conciseness_eval['score']} {relevance_eval['score']} ####")
 
     return response
 
 
-def run_meta_summarization_chain(attendees:str, summarized_chunks:str):
+def run_meta_summarization_chain(attendees: str, summarized_chunks: str):
 
-    llm = authenticate_vertex_llm(temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
+    llm = authenticate_vertex_llm(
+        temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
 
     # Define LLM Chain
     llm_chain = LLMChain(prompt=meta_summarization_prompt, llm=llm)
@@ -153,29 +174,30 @@ def run_meta_summarization_chain(attendees:str, summarized_chunks:str):
     # Define Evaluation LLM & Respective string evaluation criteria.
     eval_llm = authenticate_vertex_llm()
 
-    print("#### Sequential Meta Summary Evaluation ####")
-    input_prompt = meta_summarization_prompt.format(attendees=attendees, summarized_chunks=summarized_chunks)
+    # print("#### Sequential Meta Summary Evaluation ####")
+    # input_prompt = meta_summarization_prompt.format(attendees=attendees, summarized_chunks=summarized_chunks)
 
-    evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
-    helpfulness_eval = evaluator.evaluate_strings(prediction=response, input= input_prompt)
-    # print(helpfulness_eval)
+    # evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
+    # helpfulness_eval = evaluator.evaluate_strings(prediction=response, input= input_prompt)
+    # # print(helpfulness_eval)
 
-    evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
-    conciseness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
-    # print(conciseness_eval)
+    # evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
+    # conciseness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
+    # # print(conciseness_eval)
 
-    evaluator = load_evaluator("criteria", criteria="relevance", llm=eval_llm)
-    relevance_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
-    # print(relevance_eval)
+    # evaluator = load_evaluator("criteria", criteria="relevance", llm=eval_llm)
+    # relevance_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
+    # # print(relevance_eval)
 
-    print(f"#### Score: {helpfulness_eval['score']} {conciseness_eval['score']} {relevance_eval['score']} ####")
+    # print(f"#### Score: {helpfulness_eval['score']} {conciseness_eval['score']} {relevance_eval['score']} ####")
 
     return response
 
 
-def run_refine_documents_chain(attendees: str, prompt_chunks: list): 
+def run_refine_documents_chain(attendees: str, prompt_chunks: list):
 
-    llm = authenticate_vertex_llm(temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
+    llm = authenticate_vertex_llm(
+        temperature=0, max_output_token=1024, top_p=0.3, top_k=20)
 
     document_prompt = PromptTemplate(
         input_variables=["page_content"],
@@ -192,26 +214,27 @@ def run_refine_documents_chain(attendees: str, prompt_chunks: list):
         document_prompt=document_prompt,
         document_variable_name="chunk_to_summarize",
         initial_response_name="prelim_summary")
-    response = chain(inputs={"input_documents": prompt_chunks, "attendees": attendees})["output_text"]
+    response = chain(inputs={"input_documents": prompt_chunks, "attendees": attendees})[
+        "output_text"]
 
     # Define Evaluation LLM & Respective string evaluation criteria.
     eval_llm = authenticate_vertex_llm()
 
-    print("#### Iterative Refinment Summary Evaluation ####")
-    input_prompt = chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunks[0].page_content)
+    # print("#### Iterative Refinment Summary Evaluation ####")
+    # input_prompt = chunk_summarization_prompt.format(attendees=attendees, chunk_to_summarize=prompt_chunks[0].page_content)
 
-    evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
-    helpfulness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
-    # print(helpfulness_eval)
+    # evaluator = load_evaluator("criteria", criteria="helpfulness", llm=eval_llm)
+    # helpfulness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
+    # # print(helpfulness_eval)
 
-    evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
-    conciseness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
-    # print(conciseness_eval)
+    # evaluator = load_evaluator("criteria", criteria="conciseness", llm=eval_llm)
+    # conciseness_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
+    # # print(conciseness_eval)
 
-    evaluator = load_evaluator("criteria", criteria="relevance", llm=eval_llm)
-    relevance_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
-    # print(relevance_eval)
+    # evaluator = load_evaluator("criteria", criteria="relevance", llm=eval_llm)
+    # relevance_eval = evaluator.evaluate_strings(prediction=response, input=input_prompt)
+    # # print(relevance_eval)
 
-    print(f"#### Score: {helpfulness_eval['score']} {conciseness_eval['score']} {relevance_eval['score']} ####")
+    # print(f"#### Score: {helpfulness_eval['score']} {conciseness_eval['score']} {relevance_eval['score']} ####")
 
     return response

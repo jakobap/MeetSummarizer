@@ -2,3 +2,4 @@ Flask
 gunicorn
 langchain
 google-cloud-aiplatform
+google-cloud-storage

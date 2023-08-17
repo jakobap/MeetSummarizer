@@ -2,11 +2,36 @@
 <html>
 
 <head>
-    <title>Hello Worlds!</title>
+    <title>Meeting Summarizer</title>
 </head>
 
 <body>
-    <h1>Hello Worlds!</h1>
+    <div>
+        <h3>Select Prompting Parameters</h3>
+        <div>
+            <input type="checkbox" id="data_cleaning" name="data_cleaning" value=1>
+            <label for="data_cleaning">Input Data Cleaning</label><br>
+        </div>
+        <div>
+            <input type="checkbox" id="prompt_structuring" name="prompt_structuring" value=1>
+            <label for="prompt_structuring">Input Prompt Structure</label><br>
+        </div>
+        <div>
+            <input type="checkbox" id="iterative_prompting" name="iterative_prompting" value=1>
+            <label for="iterative_prompting">Iterative Prompting</label><br>
+        </div>
+
+    </div>
+
+    <div>
+        <h3>Upload a meeting transcript to extract a summary.</h3>
+
+        <form action="/success" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" />
+            <input type="submit" value="Upload">
+        </form>
+    </div>
+
 </body>
 
 </html>
