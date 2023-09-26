@@ -45,7 +45,7 @@ The following is the list of meeting attendees:
 
 The following is a chunked summary of one single meeting with the format: 
 ##### [Summarization Chunk] #####
- [attendee]:
+[attendee]:
 [contributions]
 
 Beginning of Summarization Chunks:

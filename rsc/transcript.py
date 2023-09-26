@@ -107,17 +107,17 @@ class Transcript:
     """
 
     # Generic chunking based on character count
-    documents = []
-    for chunk_count, i in enumerate(range(0, len(transcript), chunk_size)):
-       documents.append(Document(page_content=transcript[i:i + chunk_size], metadata={"chunk": chunk_count}))
+    # documents = []
+    # for chunk_count, i in enumerate(range(0, len(transcript), chunk_size)):
+    #    documents.append(Document(page_content=transcript[i:i + chunk_size], metadata={"chunk": chunk_count}))
 
-    # # Langchain Document Splitter.
-    # text_splitter = RecursiveCharacterTextSplitter(chunk_size = chunk_size,
-    #                                                chunk_overlap  = 50,
-    #                                                length_function = len
-    #                                                )
+    # Langchain Document Splitter.
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size = chunk_size,
+                                                   chunk_overlap  = 50,
+                                                   length_function = len
+                                                   )
     
-    # documents = text_splitter.create_documents([self.transcript_string])
+    documents = text_splitter.create_documents([self.transcript_string])
 
     return documents
   
@@ -180,13 +180,8 @@ class Transcript:
 
         self.clean_file_path = f"{self.timestamp}_cleaned.txt"
 
-        with open(self.clean_file_path, "w") as f:
-            f.writelines(clean_lines)
-
-        with open(self.clean_file_path, "r") as f:
-           self.transcript_string = f.read()
-
-        self._write_to_gcs(list_of_strings=clean_lines, txt_name='cleaned_', bucket=secrets_1.cleaned_transcript_bucket)
+        clean_blob = self._write_to_gcs(list_of_strings=clean_lines, txt_name='cleaned_', bucket=secrets_1.cleaned_transcript_bucket)
+        self.transcript_string = clean_blob.open(mode='r')
 
     else:
        raise ValueError("Problem with file extraction!")
@@ -205,7 +200,7 @@ class Transcript:
     bucket = storage.Client(project=project_id, credentials=credentials).bucket(bucket)
     blob = bucket.blob(f'{self.timestamp}_{txt_name}.txt')
     blob.upload_from_string(', '.join(list_of_strings))
-    return None
+    return blob
   
 
 if __name__ == '__main__':

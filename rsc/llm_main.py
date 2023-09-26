@@ -32,24 +32,16 @@ class SummarizationSession:
         output.append(f"##### Summarization Chunk {count} #####")
         output.append(langchain_prompting.run_simple_summarization_chain(attendees=transcript_object.attendees, prompt_chunk=prompt_chunk))
 
-
-    output_file_path = f"./output_{self.ts}.txt"
-    self._write_to_file(output, output_file_path)
-    
-    with open(output_file_path, "r") as f:
-      summarized_chunks_string = f.read()
+    prelim_output = self._write_to_gcs(output, txt_name='prelim_output', bucket=secrets_1.prelim_output_bucket)
+    summarized_chunks_string = prelim_output.download_as_text()
 
     sequential_summary = langchain_prompting.run_meta_summarization_chain(attendees=transcript_object.attendees,
                                                                       summarized_chunks=summarized_chunks_string)
-    
-    iterative_summary = langchain_prompting.run_refine_documents_chain(attendees=transcript_object.attendees,
-                                                                        prompt_chunks=transcript_object.prompt_chunks)
-    
-    self._write_to_file([sequential_summary], f"./meta_output_{self.ts}.txt")
-    self._write_to_file([iterative_summary], f"./iterative_meta_output_{self.ts}.txt")
+    meta_output = self._write_to_gcs(list_of_strings=[sequential_summary], txt_name='meta_output_', bucket=secrets_1.meta_output_bucket)
 
-    self._write_to_gcs(list_of_strings=[sequential_summary], txt_name='meta_output_', bucket=secrets_1.meta_output_bucket)
-    self._write_to_gcs(list_of_strings=[iterative_summary], txt_name='iterative_meta_output_', bucket=secrets_1.iterative_meta_output_bucket)
+    # iterative_summary = langchain_prompting.run_refine_documents_chain(attendees=transcript_object.attendees,
+    #                                                                     prompt_chunks=transcript_object.prompt_chunks)    
+    # iterative_meta_output = self._write_to_gcs(list_of_strings=[iterative_summary], txt_name='iterative_meta_output_', bucket=secrets_1.iterative_meta_output_bucket)
     return sequential_summary
 
   def _write_to_file(self, list_of_strings, file_path) -> None:
@@ -78,7 +70,7 @@ class SummarizationSession:
     bucket = storage.Client(project=project_id, credentials=credentials).bucket(bucket)
     blob = bucket.blob(f'{self.ts}_{txt_name}.txt')
     blob.upload_from_string(', '.join(list_of_strings))
-    return None
+    return blob
 
 
 if __name__ == '__main__':
