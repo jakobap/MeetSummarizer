@@ -1,5 +1,5 @@
-Flask
-gunicorn
-langchain
-google-cloud-aiplatform
-google-cloud-storage
+Flask==2.3.3
+gunicorn==21.2.0
+langchain==0.0.301
+google-cloud-aiplatform==1.33.1
+google-cloud-storage==2.11.0

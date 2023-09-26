@@ -46,7 +46,7 @@ def success():
         session = SummarizationSession(file_blob=blob, timestamp=ts)
         sum_result = session()
 
-        return render_template("Acknowledgement.html", summary = sum_result)
+        return render_template("acknowledgement.html", summary = sum_result)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

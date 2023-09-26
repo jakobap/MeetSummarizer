@@ -9,10 +9,11 @@ ENV PYTHONUNBUFFERED True
 ENV APP_HOME /app
 WORKDIR $APP_HOME
 COPY . ./
-COPY ./index.html ./index.html
-COPY rsc ./rsc
+COPY ./templates/. ./templates/
+COPY ./rsc/. ./rsc
 
 # Install production dependencies.
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Run the web service on container startup. Here we use the gunicorn
